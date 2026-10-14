@@ -1,0 +1,49 @@
+<main class="page">
+  <section class="setup-card">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">⌘</span>
+      <span>LABYRINTH</span>
+    </div>
+
+    <p class="eyebrow">A GAME OF DISCOVERY</p>
+
+    <h1>Find your way.</h1>
+
+    <p class="description">
+      Shift the maze, uncover new paths, and find your way through the labyrinth.
+    </p>
+
+    <div class="player-section">
+      <h2>Who's playing?</h2>
+      <p>Choose the number of players for your game.</p>
+
+      <div class="player-options">
+        @for (count of [2, 3, 4]; track count) {
+          <button
+            type="button"
+            class="player-option"
+            [class.selected]="playerCount === count"
+            [attr.aria-pressed]="playerCount === count"
+            (click)="selectPlayerCount(count)"
+          >
+            <span class="player-number">{{ count }}</span>
+            <span class="player-label">Players</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <button class="create-button" type="button" (click)="createGame()">
+      Create game
+      <span aria-hidden="true">→</span>
+    </button>
+
+    @if (gameCreated) {
+      <p class="success-message" role="status">
+        Ready to create a game for {{ playerCount }} players!
+      </p>
+    }
+
+    <p class="footer-note">2–4 PLAYERS · EVERY GAME IS A NEW MAZE</p>
+  </section>
+</main>
