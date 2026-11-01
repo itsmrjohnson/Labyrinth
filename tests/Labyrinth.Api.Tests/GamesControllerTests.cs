@@ -30,7 +30,7 @@ public class GamesControllerTests :
             "/api/games",
             request);
 
-        var game = await response.Content.ReadFromJsonAsync<CreateGameResponse>();
+        var game = await response.Content.ReadFromJsonAsync<GameResponse>();
 
         Assert.NotNull(game);
         Assert.Equal(0, game.CurrentPlayerIndex);
@@ -47,6 +47,20 @@ public class GamesControllerTests :
         Assert.Equal(
             new Position(0, 6),
             game.PlayerPositions[1]);
+
+        Assert.Equal(49, game.Tiles.Count);
+        Assert.All(game.Tiles, tile =>
+        {
+            Assert.InRange(tile.Row, 0, 6);
+            Assert.InRange(tile.Column, 0, 6);
+            Assert.NotEmpty(tile.Type);
+            Assert.NotEmpty(tile.Rotation);
+            Assert.NotEmpty(tile.Movement);
+            Assert.NotEmpty(tile.Connections);
+        });
+
+        Assert.Equal(-1, game.SpareTile.Row);
+        Assert.Equal(-1, game.SpareTile.Column);
     }
 
     [Fact]
@@ -82,5 +96,4 @@ public class GamesControllerTests :
             HttpStatusCode.BadRequest,
             response.StatusCode);
     }
-
 }

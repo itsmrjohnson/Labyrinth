@@ -5,45 +5,188 @@
       <span>LABYRINTH</span>
     </div>
 
-    <p class="eyebrow">A GAME OF DISCOVERY</p>
+    @if (!gameCreated()) {
+      <p class="eyebrow">A GAME OF DISCOVERY</p>
 
-    <h1>Find your way.</h1>
+      <h1>Find your way.</h1>
 
-    <p class="description">
-      Shift the maze, uncover new paths, and find your way through the labyrinth.
-    </p>
-
-    <div class="player-section">
-      <h2>Who's playing?</h2>
-      <p>Choose the number of players for your game.</p>
-
-      <div class="player-options">
-        @for (count of [2, 3, 4]; track count) {
-          <button
-            type="button"
-            class="player-option"
-            [class.selected]="playerCount === count"
-            [attr.aria-pressed]="playerCount === count"
-            (click)="selectPlayerCount(count)"
-          >
-            <span class="player-number">{{ count }}</span>
-            <span class="player-label">Players</span>
-          </button>
-        }
-      </div>
-    </div>
-
-    <button class="create-button" type="button" (click)="createGame()">
-      Create game
-      <span aria-hidden="true">→</span>
-    </button>
-
-    @if (gameCreated) {
-      <p class="success-message" role="status">
-        Ready to create a game for {{ playerCount }} players!
+      <p class="description">
+        Shift the maze, uncover new paths, and find your way through the labyrinth.
       </p>
-    }
 
-    <p class="footer-note">2–4 PLAYERS · EVERY GAME IS A NEW MAZE</p>
+      <div class="player-section">
+        <h2>Who's playing?</h2>
+        <p>Choose the number of players for your game.</p>
+
+        <div class="player-options">
+          @for (count of [2, 3, 4]; track count) {
+            <button
+              type="button"
+              class="player-option"
+              [class.selected]="playerCount === count"
+              [attr.aria-pressed]="playerCount === count"
+              (click)="selectPlayerCount(count)"
+            >
+              <span class="player-number">{{ count }}</span>
+              <span class="player-label">Players</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <button class="create-button" type="button" [disabled]="isLoading()" (click)="createGame()">
+        {{ isLoading() ? 'Creating game…' : 'Create game' }}
+        <span aria-hidden="true">→</span>
+      </button>
+
+      @if (errorMessage()) {
+        <p class="error-message" role="alert">
+          {{ errorMessage() }}
+        </p>
+      }
+
+      <p class="footer-note">2–4 PLAYERS · EVERY GAME IS A NEW MAZE</p>
+    } @else if (game(); as currentGame) {
+      <p class="eyebrow">YOUR ADVENTURE BEGINS</p>
+
+      <h1>The labyrinth.</h1>
+
+      <p class="description">Your maze is ready. Find a path through all seven rows and columns.</p>
+
+      <div class="game-info">
+        <span>{{ playerCount }} players</span>
+        <span>Turn: {{ currentGame.currentPlayerIndex + 1 }}</span>
+        <span>Phase: {{ currentGame.turnPhase }}</span>
+      </div>
+
+      <!-- Responsive game layout -->
+      <div class="game-layout">
+        <!-- Insertion controls -->
+        <div class="insertion-controls">
+          <h2>Insertion controls</h2>
+
+          <!-- Incoming tile -->
+          <div class="spare-tile-section">
+            <div class="spare-tile-heading">
+              <h3>Incoming tile</h3>
+              <p>Rotate the tile before inserting it.</p>
+            </div>
+
+            <div
+              class="spare-tile"
+              [attr.aria-label]="'Incoming tile rotated ' + previewRotation() + ' degrees'"
+            >
+              @if (game()?.spareTile; as spareTile) {
+                <app-maze-tile [type]="spareTile.type" [orientation]="previewRotation()" />
+              }
+            </div>
+
+            <div class="rotation-controls">
+              <button
+                type="button"
+                class="rotate-button"
+                (click)="rotateSpareTileCounterClockwise()"
+                aria-label="Rotate spare tile counter-clockwise"
+              >
+                ↶
+              </button>
+
+              <button
+                type="button"
+                class="rotate-button"
+                (click)="rotateSpareTileClockwise()"
+                aria-label="Rotate spare tile clockwise"
+              >
+                ↻
+              </button>
+            </div>
+          </div>
+
+          <!-- Insertion direction -->
+          <h3>Choose insertion side</h3>
+
+          <div class="insertion-directions">
+            @for (direction of ['Top', 'Right', 'Bottom', 'Left']; track direction) {
+              <button
+                type="button"
+                class="insertion-button"
+                [class.selected]="insertionLocation() === direction"
+                [attr.aria-pressed]="insertionLocation() === direction"
+                (click)="selectInsertionLocation($any(direction))"
+              >
+                {{ direction }}
+              </button>
+            }
+          </div>
+
+          <!-- Insertion position -->
+          <h3>
+            Choose
+            {{
+              insertionLocation() === 'Left' || insertionLocation() === 'Right' ? 'row' : 'column'
+            }}
+          </h3>
+
+          <div class="insertion-indices">
+            @for (index of [1, 3, 5]; track index) {
+              <button
+                type="button"
+                class="insertion-button"
+                [class.selected]="insertionIndex() === index"
+                [attr.aria-pressed]="insertionIndex() === index"
+                (click)="selectInsertionIndex(index)"
+              >
+                {{ index + 1 }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Game board -->
+        <div class="board" role="grid" aria-label="Labyrinth game board">
+          @for (tile of displayedTiles(); track tile.row + '-' + tile.column) {
+            <div
+              class="tile"
+              role="gridcell"
+              [style.grid-row]="tile.row + 1"
+              [style.grid-column]="tile.column + 1"
+              [attr.aria-label]="
+                'Row ' +
+                (tile.row + 1) +
+                ', column ' +
+                (tile.column + 1) +
+                ', ' +
+                tile.type +
+                ', rotation ' +
+                tile.rotation
+              "
+            >
+              <app-maze-tile [type]="tile.type" [orientation]="rotationToDegrees(tile.rotation)" />
+
+              @for (position of displayedPlayerPositions(); track $index) {
+                @if (position.row === tile.row && position.column === tile.column) {
+                  <span
+                    class="player-marker"
+                    [class.player-1]="$index === 0"
+                    [class.player-2]="$index === 1"
+                    [class.player-3]="$index === 2"
+                    [class.player-4]="$index === 3"
+                  >
+                    {{ $index + 1 }}
+                  </span>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <button class="create-button" type="button" (click)="selectPlayerCount(playerCount)">
+        Back to setup
+        <span aria-hidden="true">↩</span>
+      </button>
+
+      <p class="footer-note">2–4 PLAYERS · EVERY GAME IS A NEW MAZE</p>
+    }
   </section>
 </main>

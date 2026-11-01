@@ -1,0 +1,35 @@
+<svg
+  class="maze-tile"
+  viewBox="0 0 100 100"
+  role="img"
+  [attr.aria-label]="type() + ' tile, rotated ' + orientation() + ' degrees'"
+>
+  <g [attr.transform]="'rotate(' + orientation() + ' 50 50)'">
+    @switch (type()) {
+      @case ('Straight') {
+        <path d="M 50 14 V 86" class="maze-path" />
+      }
+      @case ('Corner') {
+        <path d="M 50 14 V 50 H 86" class="maze-path" />
+      }
+      @case ('TJunction') {
+        <path d="M 50 14 V 50 M 14 50 H 86" class="maze-path" />
+      }
+    }
+  </g>
+
+  <!-- Draw the border last so it stays visible above the paths. -->
+  <rect x="2" y="2" width="96" height="96" rx="4" class="tile-border" />
+</svg>
+
+@if (player() !== null) {
+  <span
+    class="player-marker"
+    [class.player-1]="player() === 1"
+    [class.player-2]="player() === 2"
+    [class.player-3]="player() === 3"
+    [class.player-4]="player() === 4"
+  >
+    {{ player() }}
+  </span>
+}

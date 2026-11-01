@@ -76,22 +76,29 @@ public class Game
     }
 
     public void InsertSpareTile(
+     BoardInsertionLocation location,
+     int index)
+    {
+        // Preserve the existing behaviour for callers that don't specify
+        // a rotation.
+        InsertSpareTile(location, index, Board.SpareTile.Rotation);
+    }
+
+    public void InsertSpareTile(
         BoardInsertionLocation location,
-        int index)
+        int index,
+        TileRotation rotation)
     {
         EnsureTileInsertionPhase();
 
-        Board.ValidateSpareTileInsertion(
-            location,
-            index);
+        // Validate the insertion before changing the spare tile's rotation.
+        Board.ValidateSpareTileInsertion(location, index);
 
-        Board.InsertSpareTile(
-            location,
-            index);
+        SetSpareTileRotation(rotation);
 
-        MovePlayersWithInsertion(
-            location,
-            index);
+        Board.InsertSpareTile(location, index);
+
+        MovePlayersWithInsertion(location, index);
 
         TurnPhase = GameTurnPhase.PlayerMovement;
     }
@@ -121,6 +128,24 @@ public class Game
             (CurrentPlayerIndex + 1) % _players.Count;
 
         TurnPhase = GameTurnPhase.TileInsertion;
+    }
+
+    public void SetSpareTileRotation(TileRotation rotation)
+    {
+        EnsureTileInsertionPhase();
+
+        if (!Enum.IsDefined(rotation))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(rotation),
+                rotation,
+                "Invalid tile rotation.");
+        }
+
+        while (Board.SpareTile.Rotation != rotation)
+        {
+            Board.SpareTile.RotateClockwise();
+        }
     }
 
     private void MovePlayersWithInsertion(
